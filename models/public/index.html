@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CraveBox - Order & Split Bill</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; margin: 0; padding: 20px; color: #333; }
+    h1 { color: #d90429; text-align: center; }
+    .container { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .btn { background: #d90429; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    .btn-veg { background: #2b9348; }
+    .food-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 10px 0; }
+    .tag-veg { color: green; font-weight: bold; font-size: 12px; border: 1px solid green; padding: 2px 5px; border-radius: 3px; }
+    .tag-nonveg { color: red; font-weight: bold; font-size: 12px; border: 1px solid red; padding: 2px 5px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+  <h1>🍕 CraveBox Food & Group Split</h1>
+
+  <div class="container">
+    <div>
+      <!-- Filter Section -->
+      <div class="card">
+        <h3>🍔 Menu Filters</h3>
+        <button class="btn" onclick="fetchFoods(false)">Show All</button>
+        <button class="btn btn-veg" onclick="fetchFoods(true)">🟢 Veg Only</button>
+      </div>
+
+      <!-- Food List -->
+      <div class="card">
+        <h3>Available Menu</h3>
+        <div id="foodList">Loading foods...</div>
+      </div>
+    </div>
+
+    <!-- Group Order & Split Bill Section -->
+    <div>
+      <div class="card">
+        <h3>👥 Group Order (Split Bill)</h3>
+        <input type="text" id="groupName" placeholder="Group Name (e.g. Adda Circle)" style="width: 90%; margin-bottom: 10px; padding: 5px;">
+        <input type="text" id="userName" placeholder="Your Name" style="width: 90%; margin-bottom: 10px; padding: 5px;">
+        <button class="btn" onclick="createGroup()">Create Group</button>
+      </div>
+
+      <div class="card">
+        <h3>💰 Your Cart & Bill</h3>
+        <div id="groupInfo">No active group created yet.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentGroupId = null;
+
+    async function fetchFoods(vegOnly = false) {
+      const res = await fetch(`/api/foods${vegOnly ? '?vegOnly=true' : ''}`);
+      const foods = await res.json();
+      
+      const foodList = document.getElementById('foodList');
+      if(foods.length === 0) {
+        foodList.innerHTML = "<p>No food available right now! Add some items first.</p>";
+        return;
+      }
+
+      foodList.innerHTML = foods.map(food => `
+        <div class="food-item">
+          <div>
+            <strong>${food.name}</strong> - ৳${food.price} 
+            <span class="${food.isVeg ? 'tag-veg' : 'tag-nonveg'}">${food.isVeg ? 'VEG' : 'NON-VEG'}</span>
+          </div>
+          <button class="btn" onclick="addToGroupOrder('${food._id}', '${food.name}', ${food.price})">+ Add</button>
+        </div>
+      `).join('');
+    }
+
+    async function createGroup() {
+      const groupName = document.getElementById('groupName').value;
+      const hostUser = document.getElementById('userName').value;
+
+      if(!groupName || !hostUser) return alert('Enter Group and User Name');
+
+      const res = await fetch('/api/groups/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ groupName, hostUser })
+      });
+      const data = await res.json();
+      currentGroupId = data._id;
+
+      document.getElementById('groupInfo').innerHTML = `
+        <p><strong>Group:</strong> ${data.groupName}</p>
+        <p><strong>Host:</strong> ${data.hostUser}</p>
+        <p><strong>Status:</strong> Active 🟢</p>
+      `;
+      alert('Group Created Successfully!');
+    }
+
+    async function addToGroupOrder(foodId, foodName, price) {
+      if(!currentGroupId) return alert('Please create or join a group first!');
+      const userName = document.getElementById('userName').value;
+      if(!userName) return alert('Enter your name!');
+
+      const res = await fetch('/api/groups/add-item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          groupId: currentGroupId,
+          userName: userName,
+          item: { foodId, foodName, price, quantity: 1 }
+        })
+      });
+
+      const data = await res.json();
+      
+      let billHTML = `<h4>Group: ${data.group.groupName}</h4>`;
+      data.group.members.forEach(m => {
+        billHTML += `<p>👤 <strong>${m.userName}:</strong> ৳${m.individualTotal}</p>`;
+      });
+      billHTML += `<hr><p><strong>Grand Total: ৳${data.group.grandTotal}</strong></p>`;
+
+      document.getElementById('groupInfo').innerHTML = billHTML;
+    }
+
+    fetchFoods();
+  </script>
+</body>
+</html>

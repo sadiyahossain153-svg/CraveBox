@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CraveBox — Order Together, Split the Bill</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand: #d70f64;
+      --brand-dark: #b00c52;
+      --brand-soft: #fde7f0;
+      --green: #1f9d55;
+      --green-soft: #e6f7ec;
+      --red: #e23744;
+      --ink: #1f2430;
+      --muted: #6b7280;
+      --line: #eef0f4;
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --shadow: 0 8px 24px rgba(20, 20, 43, 0.08);
+      --shadow-lg: 0 18px 44px rgba(20, 20, 43, 0.16);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---------- Header ---------- */
+    header {
+      background: linear-gradient(120deg, var(--brand) 0%, #ff4d8d 55%, #ff7a45 100%);
+      color: #fff;
+      padding: 18px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      box-shadow: var(--shadow);
+    }
+    .header-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .logo { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 26px; letter-spacing: -0.5px; }
+    .logo .mark {
+      background: rgba(255,255,255,0.2); border-radius: 14px; width: 46px; height: 46px;
+      display: grid; place-items: center; font-size: 26px; backdrop-filter: blur(4px);
+    }
+    .logo small { display: block; font-size: 11px; font-weight: 500; opacity: 0.9; letter-spacing: 0.4px; }
+    .header-tag { font-size: 13px; font-weight: 600; background: rgba(255,255,255,0.18); padding: 8px 14px; border-radius: 999px; }
+
+    /* ---------- Layout ---------- */
+    .wrap { max-width: 1200px; margin: 26px auto; padding: 0 20px; display: grid; grid-template-columns: 1.55fr 1fr; gap: 24px; align-items: start; }
+    @media (max-width: 940px) { .wrap { grid-template-columns: 1fr; } }
+
+    .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px; }
+    .card + .card { margin-top: 22px; }
+    .card h3 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .card .sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+
+    /* ---------- Filters ---------- */
+    .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .chip {
+      border: 1.5px solid var(--line); background: #fff; color: var(--ink);
+      padding: 9px 18px; border-radius: 999px; font-weight: 600; font-size: 14px; cursor: pointer;
+      transition: all .18s ease; font-family: inherit;
+    }
+    .chip:hover { border-color: var(--brand); color: var(--brand); transform: translateY(-1px); }
+    .chip.active { background: var(--brand); border-color: var(--brand); color: #fff; box-shadow: 0 6px 16px rgba(215,15,100,0.3); }
+    .chip.active.veg { background: var(--green); border-color: var(--green); box-shadow: 0 6px 16px rgba(31,157,85,0.3); }
+
+    /* ---------- Food grid ---------- */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 18px; margin-top: 18px; }
+    .food-card {
+      background: #fff; border-radius: 16px; overflow: hidden; border: 1px solid var(--line);
+      transition: transform .18s ease, box-shadow .18s ease; display: flex; flex-direction: column;
+    }
+    .food-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+    .food-img { position: relative; height: 132px; background: linear-gradient(135deg, #ffe1ec, #fff2e0); display: grid; place-items: center; font-size: 54px; overflow: hidden; }
+    .food-img img { width: 100%; height: 100%; object-fit: cover; }
+    .badge {
+      position: absolute; top: 10px; left: 10px; font-size: 11px; font-weight: 700; letter-spacing: .3px;
+      padding: 4px 9px; border-radius: 999px; display: flex; align-items: center; gap: 5px; backdrop-filter: blur(3px);
+    }
+    .badge.veg { background: var(--green-soft); color: var(--green); }
+    .badge.nonveg { background: #fdeaec; color: var(--red); }
+    .badge .dot { width: 8px; height: 8px; border-radius: 2px; border: 1.5px solid currentColor; position: relative; }
+    .badge .dot::after { content:''; position:absolute; inset:1.5px; border-radius:1px; background: currentColor; }
+    .cat-tag { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.55); color:#fff; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px; }
+    .food-body { padding: 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    .food-body h4 { font-size: 15px; font-weight: 700; }
+    .food-body p { font-size: 12px; color: var(--muted); flex: 1; }
+    .food-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+    .price { font-weight: 800; font-size: 16px; color: var(--ink); }
+    .price span { font-size: 13px; }
+
+    .btn { font-family: inherit; border: none; cursor: pointer; font-weight: 700; border-radius: 12px; transition: all .16s ease; }
+    .btn-primary { background: var(--brand); color: #fff; padding: 10px 18px; box-shadow: 0 6px 16px rgba(215,15,100,0.28); }
+    .btn-primary:hover { background: var(--brand-dark); transform: translateY(-1px); }
+    .btn-primary:disabled { background: #f0b8cf; cursor: not-allowed; box-shadow: none; transform: none; }
+    .btn-add { background: var(--brand-soft); color: var(--brand); padding: 8px 16px; font-size: 13px; }
+    .btn-add:hover { background: var(--brand); color: #fff; }
+    .btn-ghost { background: #fff; border: 1.5px solid var(--line); color: var(--ink); padding: 9px 16px; }
+    .btn-ghost:hover { border-color: var(--brand); color: var(--brand); }
+    .btn-block { width: 100%; }
+
+    /* ---------- Group panel ---------- */
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+    .field input, .field textarea {
+      width: 100%; padding: 11px 13px; border: 1.5px solid var(--line); border-radius: 11px;
+      font-family: inherit; font-size: 14px; color: var(--ink); background: #fbfcfe; transition: border .15s ease;
+    }
+    .field input:focus, .field textarea:focus { outline: none; border-color: var(--brand); background: #fff; }
+    .field textarea { resize: vertical; min-height: 70px; }
+    .btn-row { display: flex; gap: 10px; }
+    .btn-row .btn { flex: 1; }
+
+    .status-pill { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 999px; }
+    .status-pill.on { background: var(--green-soft); color: var(--green); }
+    .status-pill.off { background: #f2f3f7; color: var(--muted); }
+
+    /* ---------- Bill ---------- */
+    .member {
+      border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 12px; background: #fcfdff;
+    }
+    .member-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .member-head .name { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+    .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); display: grid; place-items: center; font-weight: 800; font-size: 13px; }
+    .member-total { font-weight: 800; color: var(--brand); }
+    .bill-line { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted); padding: 4px 0; }
+    .bill-line .qty { color: var(--ink); font-weight: 600; }
+    .rm { background: none; border: none; color: var(--red); cursor: pointer; font-size: 12px; font-weight: 600; font-family: inherit; }
+    .rm:hover { text-decoration: underline; }
+
+    .grand {
+      display: flex; justify-content: space-between; align-items: center; margin-top: 14px;
+      padding-top: 16px; border-top: 2px dashed var(--line); font-weight: 800; font-size: 18px;
+    }
+    .grand .amount { color: var(--brand); font-size: 24px; }
+    .empty { color: var(--muted); font-size: 13px; text-align: center; padding: 18px 0; }
+
+    /* ---------- Payment ---------- */
+    .pay-options { display: grid; gap: 10px; }
+    .pay {
+      display: flex; align-items: center; gap: 12px; border: 1.5px solid var(--line); border-radius: 12px;
+      padding: 12px 14px; cursor: pointer; transition: all .15s ease; background: #fbfcfe;
+    }
+    .pay:hover { border-color: var(--brand); }
+    .pay input { accent-color: var(--brand); width: 18px; height: 18px; }
+    .pay .icon { font-size: 22px; }
+    .pay .lbl { font-weight: 600; font-size: 14px; }
+    .pay.selected { border-color: var(--brand); background: var(--brand-soft); }
+
+    /* ---------- Sticky sidebar ---------- */
+    .sidebar { position: sticky; top: 96px; }
+    @media (max-width: 940px) { .sidebar { position: static; } }
+
+    /* ---------- Toast ---------- */
+    #toast {
+      position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--ink); color: #fff; padding: 13px 22px; border-radius: 12px; font-size: 14px; font-weight: 600;
+      box-shadow: var(--shadow-lg); opacity: 0; transition: all .3s ease; z-index: 90; pointer-events: none; max-width: 90%;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ---------- Modal ---------- */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(20,20,43,0.55); backdrop-filter: blur(3px);
+      display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px;
+    }
+    .overlay.show { display: flex; animation: fade .25s ease; }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+    .modal {
+      background: #fff; border-radius: 22px; max-width: 440px; width: 100%; padding: 30px; text-align: center;
+      box-shadow: var(--shadow-lg); animation: pop .3s cubic-bezier(.2,.9,.3,1.3);
+    }
+    @keyframes pop { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .check {
+      width: 76px; height: 76px; border-radius: 50%; background: var(--green-soft); color: var(--green);
+      display: grid; place-items: center; font-size: 40px; margin: 0 auto 16px; animation: pop .45s ease;
+    }
+    .modal h2 { font-size: 22px; margin-bottom: 6px; }
+    .modal .code { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+    .modal .code b { color: var(--ink); letter-spacing: 1px; }
+    .summary { background: #fbfcfe; border: 1px solid var(--line); border-radius: 14px; padding: 16px; text-align: left; margin-bottom: 18px; }
+    .summary .row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; color: var(--muted); }
+    .summary .row b { color: var(--ink); }
+    .summary .row.total { border-top: 1px dashed var(--line); margin-top: 8px; padding-top: 12px; font-size: 16px; font-weight: 800; color: var(--ink); }
+    .summary .row.total span:last-child { color: var(--brand); }
+    .track { display: flex; align-items: center; justify-content: space-between; margin: 18px 0; }
+    .track .step { flex: 1; text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); position: relative; }
+    .track .step .dot2 { width: 26px; height: 26px; border-radius: 50%; background: #eceef3; margin: 0 auto 6px; display: grid; place-items: center; font-size: 13px; }
+    .track .step.active { color: var(--green); }
+    .track .step.active .dot2 { background: var(--green-soft); }
+    .track .bar { height: 3px; flex: 0.6; background: #eceef3; margin-bottom: 22px; }
+
+    footer { text-align: center; color: var(--muted); font-size: 12px; padding: 26px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <div class="mark">🍔</div>
+        <div>CraveBox<small>Order together · Split the bill</small></div>
+      </div>
+      <div class="header-tag">🛵 Free delivery over ৳1000</div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <!-- ============ LEFT: MENU ============ -->
+    <div>
+      <div class="card">
+        <h3>🍽️ Explore Menu</h3>
+        <p class="sub">Fresh, fast and delicious — pick your cravings.</p>
+        <div class="filters">
+          <button class="chip active" id="chipAll" onclick="setFilter('all')">🍴 Show All</button>
+          <button class="chip veg" id="chipVeg" onclick="setFilter('veg')">🟢 Veg Only</button>
+          <button class="chip" id="chipNonVeg" onclick="setFilter('nonveg')">🔴 Non-Veg</button>
+        </div>
+        <div class="grid" id="foodGrid">
+          <div class="empty">Loading menu…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ RIGHT: SIDEBAR ============ -->
+    <div class="sidebar">
+      <!-- Group Order -->
+      <div class="card">
+        <h3>👥 Group Order <span id="groupStatus" class="status-pill off" style="margin-left:auto">Not joined</span></h3>
+        <p class="sub">Create a group and invite friends. Everyone's bill stays separate.</p>
+        <div class="field">
+          <label>Group Name</label>
+          <input type="text" id="groupName" placeholder="e.g. Friday Adda">
+        </div>
+        <div class="field">
+          <label>Your Name</label>
+          <input type="text" id="userName" placeholder="e.g. Rahim">
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="createGroup()">Create</button>
+          <button class="btn btn-ghost" onclick="joinGroup()">Join</button>
+        </div>
+      </div>
+
+      <!-- Live Bill -->
+      <div class="card">
+        <h3>💰 Live Split Bill</h3>
+        <p class="sub">Per-person totals update as items are added.</p>
+        <div id="billBox"><div class="empty">Join a group to start adding items.</div></div>
+        <div id="grandBox"></div>
+      </div>
+
+      <!-- Checkout -->
+      <div class="card">
+        <h3>🛒 Checkout</h3>
+        <p class="sub">Deliver to your door — pay your way.</p>
+        <div class="field">
+          <label>Delivery Address</label>
+          <textarea id="address" placeholder="House, Road, Area, City"></textarea>
+        </div>
+        <div class="field">
+          <label>Phone Number</label>
+          <input type="tel" id="phone" placeholder="01XXXXXXXXX">
+        </div>
+        <div class="field">
+          <label>Payment Method</label>
+          <div class="pay-options" id="payOptions">
+            <label class="pay selected"><input type="radio" name="pay" value="cod" checked><span class="icon">💵</span><span class="lbl">Cash on Delivery</span></label>
+            <label class="pay"><input type="radio" name="pay" value="bkash"><span class="icon">📱</span><span class="lbl">bKash</span></label>
+            <label class="pay"><input type="radio" name="pay" value="card"><span class="icon">💳</span><span class="lbl">Credit / Debit Card</span></label>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-block" id="placeBtn" style="margin-top:8px; padding:14px;" onclick="placeOrder()">Place Order 🚀</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>Made with ❤️ by CraveBox · Demo project</footer>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <!-- Confirmation Modal -->
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <div class="check">✓</div>
+      <h2>Order Placed!</h2>
+      <p class="code">Order code: <b id="mCode">—</b></p>
+      <div class="track">
+        <div class="step active"><div class="dot2">✓</div>Placed</div>
+        <div class="bar"></div>
+        <div class="step"><div class="dot2">👨‍🍳</div>Preparing</div>
+        <div class="bar"></div>
+        <div class="step"><div class="dot2">🛵</div>On the way</div>
+      </div>
+      <div class="summary" id="mSummary"></div>
+      <button class="btn btn-primary btn-block" onclick="closeModal()">Done</button>
+    </div>
+  </div>
+
+  <script>
+    const EMOJI = { Pizza:'🍕', Burger:'🍔', Pasta:'🍝', Paneer:'🧀', Wings:'🍗', Drinks:'🥤' };
+    let allFoods = [];
+    let currentFilter = 'all';
+    let groupId = null;
+    let currentUser = null;
+    let currentGroupName = null;
+
+    /* ---------- Toast ---------- */
+    let toastTimer;
+    function toast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+    }
+
+    /* ---------- Menu ---------- */
+    async function fetchFoods() {
+      try {
+        const res = await fetch('/api/foods');
+        allFoods = await res.json();
+        renderFoods();
+      } catch (e) {
+        document.getElementById('foodGrid').innerHTML = '<div class="empty">Could not load menu. Is the server running?</div>';
+      }
+    }
+
+    function setFilter(f) {
+      currentFilter = f;
+      document.getElementById('chipAll').classList.toggle('active', f === 'all');
+      document.getElementById('chipVeg').classList.toggle('active', f === 'veg');
+      document.getElementById('chipNonVeg').classList.toggle('active', f === 'nonveg');
+      renderFoods();
+    }
+
+    function renderFoods() {
+      let list = allFoods;
+      if (currentFilter === 'veg') list = allFoods.filter(f => f.isVeg);
+      if (currentFilter === 'nonveg') list = allFoods.filter(f => !f.isVeg);
+
+      const grid = document.getElementById('foodGrid');
+      if (list.length === 0) { grid.innerHTML = '<div class="empty">No items in this category.</div>'; return; }
+
+      grid.innerHTML = list.map(f => {
+        const emoji = EMOJI[f.category] || '🍽️';
+        const badge = f.isVeg
+          ? '<span class="badge veg"><span class="dot"></span>VEG</span>'
+          : '<span class="badge nonveg"><span class="dot"></span>NON-VEG</span>';
+        const img = f.imageUrl
+          ? `<img src="${f.imageUrl}" alt="${f.name}" onerror="this.remove()">`
+          : '';
+        return `
+          <div class="food-card">
+            <div class="food-img">${img}${badge}<span class="cat-tag">${f.category}</span></div>
+            <div class="food-body">
+              <h4>${f.name}</h4>
+              <p>${f.description || ''}</p>
+              <div class="food-foot">
+                <div class="price"><span>৳</span>${f.price}</div>
+                <button class="btn btn-add" onclick='addItem(${JSON.stringify(f._id)}, ${JSON.stringify(f.name)}, ${f.price}, ${JSON.stringify(f.imageUrl || "")})'>+ Add</button>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    /* ---------- Group ---------- */
+    async function createGroup() {
+      const groupName = document.getElementById('groupName').value.trim();
+      const userName = document.getElementById('userName').value.trim();
+      if (!groupName || !userName) return toast('Enter both Group Name and Your Name');
+
+      const res = await fetch('/api/groups/create', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ groupName, hostUser: userName })
+      });
+      const data = await res.json();
+      if (!res.ok) return toast(data.message || 'Could not create group');
+      applyGroup(data.group);
+      toast(data.message || 'Group created!');
+    }
+
+    async function joinGroup() {
+      const groupName = document.getElementById('groupName').value.trim();
+      const userName = document.getElementById('userName').value.trim();
+      if (!groupName || !userName) return toast('Enter both Group Name and Your Name');
+
+      const res = await fetch('/api/groups/join', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ groupName, userName })
+      });
+      const data = await res.json();
+      if (!res.ok) return toast(data.message || 'Could not join group');
+      applyGroup(data.group);
+      toast(data.message || 'Joined group!');
+    }
+
+    function applyGroup(group) {
+      groupId = group._id;
+      currentGroupName = group.groupName;
+      currentUser = document.getElementById('userName').value.trim();
+      const pill = document.getElementById('groupStatus');
+      pill.textContent = '● Active';
+      pill.classList.remove('off');
+      pill.classList.add('on');
+      renderBill(group);
+    }
+
+    /* ---------- Cart / Bill ---------- */
+    async function addItem(foodId, foodName, price) {
+      if (!groupId) return toast('Create or join a group first 👥');
+      if (!currentUser) return toast('Enter your name first');
+
+      const res = await fetch('/api/groups/add-item', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ groupId, userName: currentUser, item: { foodId, foodName, price, quantity: 1 } })
+      });
+      const data = await res.json();
+      if (!res.ok) return toast(data.message || 'Could not add item');
+      renderBill(data.group);
+      toast(`${foodName} added for ${currentUser} 🎉`);
+    }
+
+    async function removeItem(foodId, userName) {
+      const res = await fetch('/api/groups/remove-item', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ groupId, userName, foodId })
+      });
+      const data = await res.json();
+      if (!res.ok) return toast(data.message || 'Could not remove item');
+      renderBill(data.group);
+    }
+
+    function renderBill(group) {
+      const box = document.getElementById('billBox');
+      const grandBox = document.getElementById('grandBox');
+      const active = group.members.filter(m => m.items.length > 0);
+
+      if (active.length === 0) {
+        box.innerHTML = '<div class="empty">No items yet. Add food from the menu!</div>';
+        grandBox.innerHTML = '';
+        return;
+      }
+
+      box.innerHTML = active.map(m => {
+        const initials = m.userName.slice(0, 1).toUpperCase();
+        const lines = m.items.map(it => `
+          <div class="bill-line">
+            <span>${it.foodName} <span class="qty">× ${it.quantity}</span></span>
+            <span>৳${it.price * it.quantity}
+              <button class="rm" onclick="removeItem('${it.foodId}','${m.userName}')">remove</button>
+            </span>
+          </div>`).join('');
+        return `
+          <div class="member">
+            <div class="member-head">
+              <div class="name"><span class="avatar">${initials}</span>${m.userName}</div>
+              <div class="member-total">৳${m.individualTotal}</div>
+            </div>
+            ${lines}
+          </div>`;
+      }).join('');
+
+      grandBox.innerHTML = `<div class="grand"><span>Grand Total</span><span class="amount">৳${group.grandTotal}</span></div>`;
+    }
+
+    /* ---------- Checkout ---------- */
+    document.getElementById('payOptions').addEventListener('click', () => {
+      document.querySelectorAll('.pay').forEach(p => p.classList.remove('selected'));
+      const checked = document.querySelector('input[name="pay"]:checked');
+      if (checked) checked.closest('.pay').classList.add('selected');
+    });
+
+    async function placeOrder() {
+      if (!groupId) return toast('Create or join a group before ordering');
+      const address = document.getElementById('address').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const paymentMethod = (document.querySelector('input[name="pay"]:checked') || {}).value;
+
+      if (!address) return toast('Please enter a delivery address');
+      if (!phone) return toast('Please enter a phone number');
+
+      const btn = document.getElementById('placeBtn');
+      btn.disabled = true; btn.textContent = 'Placing…';
+
+      try {
+        const res = await fetch('/api/orders', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ groupId, address, phone, paymentMethod })
+        });
+        const data = await res.json();
+        if (!res.ok) { toast(data.message || 'Could not place order'); return; }
+        showModal(data.order, paymentMethod);
+      } catch (e) {
+        toast('Network error while placing order');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Place Order 🚀';
+      }
+    }
+
+    function payLabel(p) {
+      return { cod: '💵 Cash on Delivery', bkash: '📱 bKash', card: '💳 Card' }[p] || p;
+    }
+
+    function showModal(order, paymentMethod) {
+      document.getElementById('mCode').textContent = order.orderCode || '—';
+      const memberRows = (order.members || []).map(m =>
+        `<div class="row"><span>👤 ${m.userName}</span><b>৳${m.individualTotal}</b></div>`
+      ).join('');
+      document.getElementById('mSummary').innerHTML = `
+        <div class="row"><span>Group</span><b>${order.groupName || 'Solo'}</b></div>
+        ${memberRows}
+        <div class="row"><span>Payment</span><b>${payLabel(paymentMethod)}</b></div>
+        <div class="row"><span>Status</span><b style="color:var(--green)">Placed ✓</b></div>
+        <div class="row total"><span>Grand Total</span><span>৳${order.grandTotal}</span></div>`;
+      document.getElementById('overlay').classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('overlay').classList.remove('show');
+    }
+    document.getElementById('overlay').addEventListener('click', (e) => {
+      if (e.target.id === 'overlay') closeModal();
+    });
+
+    /* ---------- Init ---------- */
+    fetchFoods();
+  </script>
+</body>
+</html>
